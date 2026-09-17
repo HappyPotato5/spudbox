@@ -7,15 +7,15 @@
 **Spudbox** is a library that implements some **data structures** used in my **Rust** projects.
 
 ## Types
-+ [`VecSet<T>`](https://docs.rs/spudbox/0.1.0/spudbox/vecset/struct.VecSet.html) Is an **ordered** `HashSet<T>`.
-+ [`Arena<T>`](https://docs.rs/spudbox/0.1.0/spudbox/arena/struct.Arena.html) Is an **Arena allocator** for any **T** type.
++ [`VecSet<T>`](https://docs.rs/spudbox/latest/spudbox/vecset/struct.VecSet.html) Is an **ordered** `HashSet<T>`.
++ [`Arena<T>`](https://docs.rs/spudbox/latest/spudbox/arena/struct.Arena.html) Is an **Arena allocator** for any **T** type.
 
 ## Features
 This crate is **subdivided** with **features** to allow you to only import the submodules that **you use**.
 
 ### Default:
-+ **`vecset`**: Enables [`VecSet<T>`](https://docs.rs/spudbox/0.1.0/spudbox/vecset/struct.VecSet.html).
-+ **`arena`**: Enables [`Arena<T>`](https://docs.rs/spudbox/0.1.0/spudbox/arena/struct.Arena.html).
++ **`vecset`**: Enables [`VecSet<T>`](https://docs.rs/spudbox/latest/spudbox/vecset/struct.VecSet.html).
++ **`arena`**: Enables [`Arena<T>`](https://docs.rs/spudbox/latest/spudbox/arena/struct.Arena.html).
 
 
 All the contents from **submodules** are automatically **re-exported** through the **spudbox** crate, to avoid this you can use the **`no-prelude`** **feature**.
