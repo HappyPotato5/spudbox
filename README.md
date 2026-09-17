@@ -1,5 +1,5 @@
 [![Crates.io](https://img.shields.io/badge/Crates.io-latest-blue?style=for-the-badge&logo=rust&logoColor=black&labelColor=BBBBBB)](https://crates.io/crates/spudbox)
-[![Docs.rs](https://img.shields.io/badge/Documentation-SpudBox-blue?style=for-the-badge&logo=Docs.rs&logoColor=black&labelColor=BBBBBB)](https://docs.rs/serax/latest/spudbox/)
+[![Docs.rs](https://img.shields.io/badge/Documentation-SpudBox-blue?style=for-the-badge&logo=Docs.rs&logoColor=black&labelColor=BBBBBB)](https://docs.rs/spudbox/latest/spudbox/)
 [![Github](https://img.shields.io/badge/Github-SpudBox-blue?style=for-the-badge&logo=github&logoColor=black&labelColor=BBBBBB)](https://github.com/HappyPotato5/spudbox)
 [![License](https://img.shields.io/badge/License-GPL--v3-blue?style=for-the-badge&logo=readdotcv&logoColor=black&labelColor=BBBBBB)](https://github.com/HappyPotato5/spudbox/blob/master/LICENSE)
 
