@@ -1,7 +1,12 @@
 [package]
 name = "spudbox"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2024"
+description = "A library that implements some useful data structures."
+authors = ["HappyPotato5"]
+repository = "https://github.com/HappyPotato5/spudbox"
+license = "GPL-3.0-or-later"
+readme = "README.md"
 
 [dependencies]
 
