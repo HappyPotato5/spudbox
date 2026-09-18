@@ -4,6 +4,9 @@
 #[cfg(feature = "arena")]
 pub mod arena;
 
+#[cfg(feature = "ordered-set")]
+pub mod ordered_set;
+
 #[cfg(feature = "vecset")]
 pub mod vecset;
 
@@ -12,6 +15,9 @@ pub mod prelude {
 
     #[cfg(feature = "arena")]
     pub use arena::*;
+
+    #[cfg(feature = "ordered-set")]
+    pub use ordered_set::*;
 
     #[cfg(feature = "vecset")]
     pub use vecset::*;

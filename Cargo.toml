@@ -1,6 +1,6 @@
 [package]
 name = "spudbox"
-version = "1.0.2"
+version = "2.0.0"
 edition = "2024"
 description = "A library that implements some useful data structures."
 authors = ["HappyPotato5"]
@@ -9,9 +9,11 @@ license = "GPL-3.0-or-later"
 readme = "README.md"
 
 [dependencies]
+hashbrown = { version = "0.17.1", optional = true}
 
 [features]
-default = ["arena", "vecset"]
+default = ["arena", "ordered-set", "vecset"]
 no-prelude = []
 arena = []
+ordered-set = ["dep:hashbrown"]
 vecset = []

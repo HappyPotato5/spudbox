@@ -1,8 +1,6 @@
 
 //! The submodule that handles [`VecSets`](VecSet).
 
-use std::collections::HashSet as Set;
-use std::hash::Hash;
 use std::fmt::Display;
 
 /// Creates a new [`VecSet<T>`] from the contents of the brackets.
@@ -18,27 +16,26 @@ macro_rules! vecset {
 
 pub use crate::vecset;
 
-/// A `VecSet` is an ordered set.
+/// A simple Set, implemented with a [`Vec`].
 /// 
-/// Its implemented with an internal HashSet and a Vec, So it takes the double of space as a regular Vec.
+/// You can use [`insert()`](Self::insert()), [`push()`](Self::push()), [`expand()`] to add new elements.
 /// 
-/// When pushing/inserting, elements need to be cloned, which may be very expensive.
-/// 
+/// And [`pop()`](Self::pop()), [`remove_index()`](Self::remove_index()), [`remove_value()`](Self::remove_value()) to remove elements.
+///
 /// # Examples
-/// 
 /// ```
-#[doc = include_str!("../examples/dedup.rs")]
+#[doc = include_str!("../examples/dedup2.rs")]
 /// ```
-#[derive(Default, Clone, Eq, PartialEq, Debug)]
-pub struct VecSet<T: Eq + Clone + Hash> {
-    set: Set<T>,
+#[derive(Default, Clone, Debug)]
+// TODO: make this support Eq and partialEq
+pub struct VecSet<T: Eq> {
     vec: Vec<T>
 }
 
-impl<T: Eq + Clone + Hash> VecSet<T> {
-    /// Creates a new VecSet<T>
+impl<T: Eq> VecSet<T> {
+    /// Creates a new [`VecSet<T>`]
     pub fn new() -> VecSet<T> {
-        VecSet { set: Set::new(), vec: Vec::new() }
+        VecSet { vec: Vec::new() }
     }
 
     /// Creates a [`VecSet<T>`] from a [`Vec<T>`], **removing duplicated** values, while **keeping** the same **order**.
@@ -48,48 +45,44 @@ impl<T: Eq + Clone + Hash> VecSet<T> {
         res
     }
 
-    /// Creates a new VecSet<T> with at least the given capacity.
+    /// Creates a new [`VecSet<T>`] with at least the given capacity.
     pub fn with_capacity(capacity: usize) -> VecSet<T> {
-        VecSet { set: Set::with_capacity(capacity), vec: Vec::with_capacity(capacity) }
+        VecSet { vec: Vec::with_capacity(capacity) }
+    }
+
+    /// Returns whether the [`VecSet<T>`] contains an `element` or not.
+    pub fn contains(&self, value: &T) -> bool {
+        self.vec.iter().any(|x| *x == *value)
     }
 
     /// Reserves enough space for at least `additional` elements.
     pub fn reserve(&mut self, additional: usize) {
-        self.set.reserve(additional);
         self.vec.reserve(additional);
     }
 
-    /// Pushes a new value to the end of a VecSet.
+    /// Pushes a new value to the end of a [`VecSet<T>`].
     /// 
-    /// Returns `false` if the element was already in the [`VecSet`], returns `true` otherwise.
-    pub fn push(&mut self, value: T) -> bool {
-        if self.set.insert(value.clone()) {
-            self.vec.push(value);
-            return true;
-        }
-        false
+    /// Returns `Some(value)` if the element was already in the [`VecSet<T>`], returns `None` otherwise.
+    pub fn push(&mut self, value: T) -> Option<T> {
+        if self.contains(&value) { return Some(value) }
+        self.vec.push(value);
+        None
     }
 
     /// Inserts a new element at the given `index`.
     /// 
     /// The remaining elements are **shifted** if needed.
     /// 
-    /// Returns `false` if the element was already in the [`VecSet`], returns `true` otherwise.
-    pub fn insert(&mut self, index: usize, value: T) -> bool {
-        if self.set.insert(value.clone()) {
-            self.vec.insert(index, value);
-            return true;
-        }
-        false
+    /// Returns `Some(value)` if the element was already in the [`VecSet<T>`], returns `None` otherwise.
+    pub fn insert(&mut self, index: usize, value: T) -> Option<T> {
+        if self.contains(&value) { return Some(value) }
+        self.vec.insert(index, value);
+        None
     }
 
     /// Returns the last element of the [`VecSet`], returns `None` if the [`VecSet`] is empty.
     pub fn pop(&mut self) -> Option<T> {
-        let res = self.vec.pop()?;
-
-        self.set.remove(&res);
-
-        Some(res)
+        self.vec.pop()
     }
 
     /// Returns the `len` of the [`VecSet`].
@@ -101,23 +94,17 @@ impl<T: Eq + Clone + Hash> VecSet<T> {
     /// 
     /// If the `index` is out of bounds `None` is returned.
     pub fn remove_index(&mut self, index: usize) -> Option<T> {
-        if index < self.len() {
-            let res = self.vec.remove(index);
-            self.set.remove(&res);
-            return Some(res);
-        }
-        None
+        if index >= self.len() { return None }
+        Some(self.vec.remove(index))
     }
 
     /// Removes and returns the element that fulfills ```element == *value```
     /// 
     /// If the [`VecSet`] doesn't contain such element, `None` is returned.
     pub fn remove_value(&mut self, value: &T) -> Option<T> {
-        if self.set.remove(value) {
-            let pos = self.vec.iter().position(|x| *x == *value).expect("Broken Invariant");
-            return Some(self.vec.remove(pos));
-        }
-        None
+        let idx = self.iter().position(|x| *x == *value)?;
+
+        Some(self.vec.remove(idx))
     }
 
     /// Returns an `iterator` over references of the elements of the [`VecSet`].
@@ -125,26 +112,16 @@ impl<T: Eq + Clone + Hash> VecSet<T> {
         self.vec.iter()
     }
 
-    /// Returns whether the [`VecSet`] contains an `element` or not.
-    pub fn contains(&self, value: &T) -> bool {
-        self.set.contains(value)
-    }
-
     /// Replaces the element in the given `index` by the given `replacement`.
     /// 
     /// Returns `Ok(replaced_element)` if the replacement is successful,
     /// Returns `Err(replacement)` otherwise.
     /// 
-    /// The replacement will fail if the index is **out of bounds** or if the replacement is already in the `[VecSet`].
+    /// The replacement will fail if the index is **out of bounds** or if the replacement is already in the [`VecSet`].
     pub fn replace_index(&mut self, index: usize, replacement: T) -> Result<T, T> {
-        if index >= self.len() || self.contains(&replacement) { return Err(replacement); }
+        if self.contains(&replacement) { return Err(replacement) }
 
-        let el = &mut self.vec[index];
-        
-        self.set.remove(&*el);
-        self.set.insert(replacement.clone());
-
-        Ok(std::mem::replace(el,replacement))
+        Ok(std::mem::replace(&mut self.vec[index], replacement))
     }
 
     /// Replaces the element in the given `index` by `replacement`.
@@ -154,15 +131,13 @@ impl<T: Eq + Clone + Hash> VecSet<T> {
     /// 
     /// The replacement will fail if the value is **not present** in the [`VecSet`] or if the replacement is already in the [`VecSet`].
     pub fn replace_value(&mut self, value: &T, replacement: T) -> Result<T, T> {
-        if !self.contains(value) || self.contains(&replacement) { return Err(replacement); }
+        if self.contains(&replacement) { return Err(replacement) }
 
-        let index = self.vec.iter().position(|x| *x == *value).expect("Broken Invariant");
-        let el = &mut self.vec[index];
-        
-        self.set.remove(&*el);
-        self.set.insert(replacement.clone());
+        let Some(idx) = self.vec.iter().position(|x| *x == *value) else {
+            return Err(replacement)
+        };
 
-        Ok(std::mem::replace(el,replacement))
+        Ok(std::mem::replace(&mut self.vec[idx], replacement))
     }
 
     /// Returns a **reference** to the element with the given `index`, or `None` if the `index` is **out of bounds**.
@@ -171,9 +146,14 @@ impl<T: Eq + Clone + Hash> VecSet<T> {
     pub fn get(&self, index: usize) -> Option<&T> {
         self.vec.get(index)
     }
+
+    /// Returns the `index` of the element that matches the given `value`.
+    pub fn get_index(&self, value: &T) -> Option<usize> {
+        self.vec.iter().position(|x| *x == *value)
+    }
 }
 
-impl<T: Eq + Clone + Hash> std::ops::Index<usize> for VecSet<T> {
+impl<T: Eq> std::ops::Index<usize> for VecSet<T> {
     type Output = T;
 
     /// Returns a **reference** to the element at `index` or panics if the `index` is **out of bounds**.
@@ -182,7 +162,7 @@ impl<T: Eq + Clone + Hash> std::ops::Index<usize> for VecSet<T> {
     }
 }
 
-impl<T: Eq + Clone + Hash> IntoIterator for VecSet<T> {
+impl<T: Eq> IntoIterator for VecSet<T> {
     type Item = T;
     type IntoIter = std::vec::IntoIter<T>;
 
@@ -192,20 +172,20 @@ impl<T: Eq + Clone + Hash> IntoIterator for VecSet<T> {
     }
 }
 
-impl<'a, T: Eq + Clone + Hash> IntoIterator for &'a VecSet<T> {
+impl<'a, T: Eq> IntoIterator for &'a VecSet<T> {
     type Item = &'a T;
     type IntoIter = std::slice::Iter<'a, T>;
 
-    /// Returns an iterator over references of the elements in the VecSet.
+    /// Returns an iterator over references of the elements in the [`VecSet`].
     /// 
-    /// Equivalent of VecSet::iter().
+    /// Equivalent of [`VecSet::iter()`].
     fn into_iter(self) -> Self::IntoIter {
         self.vec.iter()
     }
 }
 
-impl<T: Display + Eq + Clone + Hash> Display for VecSet<T> {
-    /// Displays the VecSet in the form "\[e_0, e_1, e_2 ... e_n-1\]".
+impl<T: Display + Eq> Display for VecSet<T> {
+    /// Displays the [`VecSet`] in the form "\[e_0, e_1, e_2 ... e_n-1\]".
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{{")?;
         let mut idx = 0usize;
@@ -220,7 +200,7 @@ impl<T: Display + Eq + Clone + Hash> Display for VecSet<T> {
     }
 }
 
-impl<T: Hash + Eq + Clone> Extend<T> for VecSet<T> {
+impl<T: Eq> Extend<T> for VecSet<T> {
     /// Appends the contents of the `iter` to the end of the [`VecSet`].
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         for el in iter {

@@ -1,7 +1,12 @@
-use spudbox::vecset;
+use spudbox::ordered_set::*;
 
 fn main() {
-    let vecset = vecset!["my", "name", "name", "name", "is", "Potato", "Potato", "I", "Am", "Am", "Am", "A", "Robot"];
+    let mut ordset = ordset!["My", "name", "name", "name", "is", "Potato", "Potato", "I", "am", "am", "am", "a", "Robot"];
 
-    assert_eq!(format!("{}", vecset), r#"{my, name, is, Potato, I, Am, A, Robot}"#);
+    ordset.insert(7, "super");
+    ordset.push("Robot");
+    ordset.push("NOOOO");
+    ordset.pop();
+
+    assert_eq!(format!("{}", ordset), r#"{My, name, is, Potato, I, am, a, super, Robot}"#);
 }

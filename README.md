@@ -7,14 +7,16 @@
 **Spudbox** is a library that implements some **data structures** used in my **Rust** projects.
 
 ## Types
-+ [`VecSet<T>`](https://docs.rs/spudbox/latest/spudbox/vecset/struct.VecSet.html) Is an **ordered** `HashSet<T>`.
-+ [`Arena<T>`](https://docs.rs/spudbox/latest/spudbox/arena/struct.Arena.html) Is an **Arena allocator** for any **T** type.
++ [`VecSet<T>`](https://docs.rs/spudbox/latest/spudbox/vecset/struct.VecSet.html): A [`Vec<T>`] that doesn't allow repetitions.
++ [`OrderedSet<T>`](https://docs.rs/spudbox/2.0.0/spudbox/ordered_set/struct.OrderedSet.html): An **ordered** [`HashSet<T>`].
++ [`Arena<T>`](https://docs.rs/spudbox/latest/spudbox/arena/struct.Arena.html): An **Arena allocator** for any **T** type.
 
 ## Features
 This crate is **subdivided** with **features** to allow you to only import the submodules that **you use**.
 
 ### Default:
 + **`vecset`**: Enables [`VecSet<T>`](https://docs.rs/spudbox/latest/spudbox/vecset/struct.VecSet.html).
++ **`ordered-set`**: Enables [`OrderedSet<T>`](https://docs.rs/spudbox/2.0.0/spudbox/ordered_set/struct.OrderedSet.html).
 + **`arena`**: Enables [`Arena<T>`](https://docs.rs/spudbox/latest/spudbox/arena/struct.Arena.html).
 
 
