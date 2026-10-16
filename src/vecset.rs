@@ -157,6 +157,9 @@ impl<T: Eq> std::ops::Index<usize> for VecSet<T> {
     type Output = T;
 
     /// Returns a **reference** to the element at `index` or panics if the `index` is **out of bounds**.
+    /// 
+    /// # Time complexity
+    /// O(1)
     fn index(&self, index: usize) -> &Self::Output {
         &self.vec[index]
     }
@@ -202,9 +205,26 @@ impl<T: Display + Eq> Display for VecSet<T> {
 
 impl<T: Eq> Extend<T> for VecSet<T> {
     /// Appends the contents of the `iter` to the end of the [`VecSet`].
+    /// 
+    /// # Time complexity
+    /// O(n^2)
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         for el in iter {
             self.push(el);
         }
+    }
+}
+
+impl<T: Eq> PartialEq for VecSet<T> {
+    /// Checks that both [`VecSets`](VecSet) contain the **same elements**, in the **same order**.
+    /// 
+    /// # Time complexity
+    /// O(n)
+    fn eq(&self, other: &Self) -> bool {
+        if self.len() != other.len() {
+            return false
+        }
+
+        self.iter().zip(other.iter()).all(|(a, b)| *a == *b)
     }
 }
