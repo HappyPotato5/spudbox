@@ -1,25 +1,75 @@
+#![allow(rustdoc::redundant_explicit_links)]
 
-#![doc = include_str!("../README.md")]
+//! [![Crates.io](https://img.shields.io/badge/Crates.io-latest-blue?style=for-the-badge&logo=rust&logoColor=black&labelColor=BBBBBB)](https://crates.io/crates/spudbox)
+//! [![Docs.rs](https://img.shields.io/badge/Documentation-SpudBox-blue?style=for-the-badge&logo=Docs.rs&logoColor=black&labelColor=BBBBBB)](https://docs.rs/spudbox/latest/spudbox/)
+//! [![GitHub](https://img.shields.io/badge/Github-SpudBox-blue?style=for-the-badge&logo=github&logoColor=black&labelColor=BBBBBB)](https://github.com/HappyPotato5/spudbox)
+//! [![License](https://img.shields.io/badge/License-GPL--v3-blue?style=for-the-badge&logo=readdotcv&logoColor=black&labelColor=BBBBBB)](https://github.com/HappyPotato5/spudbox/blob/master/LICENSE)
+//! 
+//! # Spudbox
+//! A library that implements lots of useful **data structures** used in <!--vale off--> my <!--vale on--> **Rust** projects.
+//! 
+//! ## Types
+//! 
+//! From **[`prelude`](mod@prelude)**:
+//! + [`VecSet<T>`](vecset::VecSet): A [`Vec<T>`](std::vec::Vec) that doesn't keep repetitions.
+//! + [`OrderedSet<T>`](ordered_set::OrderedSet): An **ordered** [`HashSet<T>`](std::collections::HashSet).
+//! + [`Arena<T>`](arena::Arena): An **Arena allocator** for any **T** type.
+//! 
+//! From **[`lexer`](mod@lexer)**:
+//! + [`Lexer`](lexer::Lexer): A **lexer** for tokens matching a [`Pattern`](lexer::Pattern).
+//! + [`RawToken`](lexer::RawToken): A **Token** which still contains the *lexeme*. 
+//! + [`Span`](lexer::Span): A struct that holds the starting and end position of a [`RawToken`](lexer::RawToken).
+//! + [`Pattern`](lexer::Pattern): A **pattern** that can match a *substring*.
+//! + [`ConflictPolicy`](lexer::ConflictPolicy): An *enum* used to resolve conflicts.
+//! + [`Recipe`](lexer::Recipe): A **recipe** used by a [`Lexer`](lexer::Lexer) to build *tokens*.
+//! + [`recipe!`](recipe): A **macro** that constructs [`Recipes`](lexer::Recipe) in a simplified manner.
+//! + [`recipe_list!`](recipe_list): A **macro** that constructs [`Vec<Recipe>`](lexer::Recipe) in a simplified manner.
+//! 
+//! ## Features
+//! This crate uses **features**, so you only import the submodules that **you use**.
+//! 
+//! ### <!--vale off-->By Default<!--vale on-->:
+//! + **`vecset`**: Enables the [`vecset`](mod@vecset) submodule.
+//! + **`ordered-set`**: Enables the [`ordered_set`](mod@ordered_set) submodule.
+//! + **`arena`**: Enables the [`arena`](mod@arena) submodule.
+//! 
+//! ### Additionally:
+//! + **`lexer`**: Enables the [`lexer`](mod@lexer) submodule.
+//! 
+//! **Spudbox** crate automatically **re-exports** prelude contents, to avoid this you can use the **`no-prelude`** **feature**.
+//! 
+//! ## Examples
+//! You can find examples in the [GitHub repository](https://github.com/HappyPotato5/spudbox).
+//! 
 
-#[cfg(feature = "arena")]
+#[cfg(any(feature = "arena", doc, debug_assertions))]
 pub mod arena;
 
-#[cfg(feature = "ordered-set")]
+#[cfg(any(feature = "ordered-set", doc, debug_assertions))]
 pub mod ordered_set;
 
-#[cfg(feature = "vecset")]
+#[cfg(any(feature = "vecset", doc, debug_assertions))]
 pub mod vecset;
 
+#[cfg(any(feature = "lexer", doc, debug_assertions))]
+pub mod lexer;
+
+/// The submodule that contains the most used types.
+/// 
+/// Prelude contains the following types (if enabled):
+/// + [`arena::Arena`](mod@arena)
+/// + [`ordered_set::*`](mod@ordered_set)
+/// + [`vecset::*`](mod@vecset)`
 pub mod prelude {
     use super::*;
 
-    #[cfg(feature = "arena")]
+    #[cfg(any(feature = "arena", doc, debug_assertions))]
     pub use arena::*;
 
-    #[cfg(feature = "ordered-set")]
+    #[cfg(any(feature = "ordered-set", doc, debug_assertions))]
     pub use ordered_set::*;
 
-    #[cfg(feature = "vecset")]
+    #[cfg(any(feature = "vecset", doc, debug_assertions))]
     pub use vecset::*;
 }
 
