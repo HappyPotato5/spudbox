@@ -13,9 +13,9 @@ impl<T> Slot<T> {
     }
 }
 
-/// A generational [`Index`] to some element stored in an [`Arena`].
+/// A *generational* [`Index`] to some element stored in an [`Arena`].
 /// 
-/// The [`Index`] is generational because it will be **invalidated** after it is used in the [`Arena<T>::free()`] function.
+/// A generational index will get **invalidated as soon as freed** in [`Arena::free()`].
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct Index {
     idx: usize,
@@ -28,10 +28,10 @@ impl Index {
     }
 }
 
-/// A memory-contiguous sequence of T elements, where each one can be referenced by it's index.
+/// A *memory-contiguous* sequence of `T` elements, where you can use their [`indices`](Index) to reference them.
 /// 
-/// An arena can be used, for example, to keep nodes of a tree without dealing with references, 
-/// And to make memory access faster thanks to memory-contiguity.
+/// You can use an [`Arena`], for example, to keep nodes of a *tree* without dealing with references, 
+/// And to make memory access **faster** thanks to *memory-contiguity*.
 /// 
 /// # Examples
 /// ```
@@ -47,7 +47,7 @@ pub struct Arena<T> {
 impl<T> Arena<T> {
     /// Creates a new empty [`Arena<T>`].
     /// 
-    /// No allocations will take place until [`Arena<T>::alloc()`] is called.
+    /// No allocations will take place until the use of [`Arena<T>::alloc()`].
     pub fn new() -> Arena<T> {
         Arena { slots: Vec::new(), free_slots: Vec::new() }
     }
@@ -59,8 +59,7 @@ impl<T> Arena<T> {
 
     /// Creates a new empty [`Arena<T>`] with enough capacity to hold at least `capacity` elements.
     /// 
-    /// `with_capacity()` can be used to make sure no reallocations will take place
-    ///  until the number of elements is greater than the given `capacity`.
+    /// No *reallocations* will take place until the number of elements *exceeds* the supplied `capacity`.
     pub fn with_capacity(capacity: usize) -> Arena<T> {
         let slots = Vec::with_capacity(capacity);
         let free_slots = Vec::with_capacity(capacity);
@@ -70,14 +69,14 @@ impl<T> Arena<T> {
 
     /// Returns the **number** of **allocated elements**.
     /// 
-    /// Empty slots left after calling [`free()`](Self::free()) won't be counted.
+    /// Doesn't count empty slots left after calling [`free()`](Self::free()).
     pub fn len(&self) -> usize {
         self.slots.len() - self.free_slots.len()
     }
 
     /// Returns the **`capacity`** of the [`Arena<T>`].
     /// 
-    /// The `capacity` is the **maximum** amount of elements that can be hold at the same time **without reallocating**.
+    /// The *total* amount of elements it can hold a the *same time*.
     pub fn capacity(&self) -> usize {
         self.slots.capacity()
     }
@@ -88,9 +87,9 @@ impl<T> Arena<T> {
         self.free_slots.reserve(additional);
     }
 
-    /// Shrinks the [`Arena`] to fit *at least* it's [`len`](Self::len()).
+    /// Shrinks the [`Arena`] to fit *at least* its [`length`](Self::len()).
     /// 
-    /// **Only** trailing spaces are removed to **preserve** existing indices.
+    /// **Only** removes trailing spaces to **preserve** existing [indices](Index).
     pub fn shrink_to_fit(&mut self) {
         loop {
             let Some(slot) = self.slots.last() else { break };
@@ -112,10 +111,11 @@ impl<T> Arena<T> {
         self.free_slots = free_slots;
     }
 
-    /// Allocates space for a new element `data`, and returns it's `index`.
+    /// Allocates space for a new element `data`, and returns its [`index`](Index).
     /// 
-    /// + This is **O(1)** if the arena has enough capacity to fit the new element.
-    /// + **O(n) otherwise**.
+    /// # Time complexity
+    /// Amortized O(1).
+    /// Worst case: O(n).
     pub fn alloc(&mut self, data: T) -> Index {
         if let Some(idx) = self.free_slots.pop() {
             let slot = &mut self.slots[idx];
@@ -132,10 +132,10 @@ impl<T> Arena<T> {
         }
     }
 
-    /// Frees and returns the element with the given index `idx`.
-    /// `idx` becomes invalid after freeing.
+    /// Frees and returns the element with the given [index](Index) `idx`.
+    /// Then `idx` gets *invalidated*.
     /// 
-    /// If the index is invalid None is returned.
+    /// For an invalid [index](Index), returns [`None`].
     pub fn free(&mut self, idx: Index) -> Option<T> {
         self.check_index(idx)?;
 
@@ -146,9 +146,12 @@ impl<T> Arena<T> {
         std::mem::take(&mut slot.data)
     }
 
-    /// Returns a **reference** to the element with the given index `idx`.
+    /// Returns a **reference** to the element with the given [index](Index) `idx`.
     /// 
-    /// If the index is invalid `None` is returned.
+    /// For an invalid [index](Index), returns [`None`].
+    /// 
+    /// # Time complexity
+    /// Constant, O(1).
     pub fn get(&self, idx: Index) -> Option<&T> {
         self.check_index(idx)?;
 
@@ -157,20 +160,52 @@ impl<T> Arena<T> {
 
     /// Returns a **mutable reference** to the element with the given index `idx`.
     /// 
-    /// If the index is invalid `None` is returned.
+    /// For an invalid [index](Index), returns [`None`].
+    /// 
+    /// # Time complexity
+    /// Constant, O(1).
     pub fn get_mut(&mut self, idx: Index) -> Option<&mut T> {
         self.check_index(idx)?;
 
         self.slots[idx.idx].data.as_mut()
+    }
+
+    /// Applies the closure `f` to every contained `T` element, and returns the resulting [`Arena<O>`].
+    /// 
+    /// The [`indices`](Index) don't get invalidated after this operation.
+    /// 
+    /// # Time complexity
+    /// Lineal, O(n).
+    pub fn map<O, F>(self, mut f: F) -> Arena<O>
+        where F: FnMut(T) -> O
+    {
+        let mut slots = Vec::with_capacity(self.capacity());
+
+        for slot in self.slots {
+            slots.push(Slot {
+                data: slot.data.map(&mut f),
+                generation: slot.generation,
+            });
+        }
+
+        let mut res = Arena::new();
+
+        res.slots = slots;
+        res.free_slots = self.free_slots;
+        res
     }
 }
 
 impl<T> std::ops::Index<Index> for Arena<T> {
     type Output = T;
 
-    /// Returns a reference to the element with the given index `idx`.
+    /// Returns a *reference* to the element with the given index `idx`.
     /// 
-    /// **Panics** if the index is invalid.
+    /// # Panics
+    /// **Panics** for an invalid index.
+    /// 
+    /// # Time complexity
+    /// Constant, O(1).
     fn index(&self, index: Index) -> &Self::Output {
         self.get(index).expect("Invalid index")
     }
@@ -178,9 +213,13 @@ impl<T> std::ops::Index<Index> for Arena<T> {
 
 impl<T> std::ops::IndexMut<Index> for Arena<T> {
 
-    /// Returns a mutable reference to the element with the given index `idx`.
+    /// Returns a *mutable reference* to the element with the given [index](Index) `idx`.
     /// 
-    /// **Panics** if the index is invalid.
+    /// # Panics
+    /// **Panics** for an invalid index.
+    /// 
+    /// # Time complexity
+    /// Constant, O(1).
     fn index_mut(&mut self, index: Index) -> &mut Self::Output {
         self.get_mut(index).expect("Invalid index")
     }
