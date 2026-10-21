@@ -20,7 +20,7 @@ pub use crate::ordset;
 
 /// A simple and fast `OrderedSet`.
 /// 
-/// You can use [`insert()`](Self::insert()), [`push()`](Self::push()), [`expand()`] to add new elements.
+/// You can use [`insert()`](Self::insert()), [`push()`](Self::push()), [`exptend()`](Extend) to add new elements.
 /// 
 /// And [`pop()`](Self::pop()), [`remove_index()`](Self::remove_index()), [`remove_value()`](Self::remove_value()) to remove elements.
 ///
@@ -29,7 +29,6 @@ pub use crate::ordset;
 #[doc = include_str!("../examples/dedup.rs")]
 /// ```
 #[derive(Default, Clone, Debug)]
-// TODO: make this support Eq and partialEq
 pub struct OrderedSet<T: Eq + Hash> {
     table: HashTable<usize>,
     vec: Vec<T>
@@ -78,10 +77,10 @@ impl<T: Eq + Hash> OrderedSet<T> {
 
     /// Pushes a new value to the end of a [`OrderedSet<T>`].
     /// 
-    /// Returns `Some(value)` if the element was already in the [`OrderedSet<T>`], returns `None` otherwise.
+    /// Returns `Some(value)` if the [`OrderedSet`] already contains the `value`.
     /// 
     /// # Time complexity
-    /// O(1)
+    /// Constant, O(1).
     pub fn push(&mut self, value: T) -> Option<T> {
         if self.contains(&value) { return Some(value) }
 
@@ -93,12 +92,12 @@ impl<T: Eq + Hash> OrderedSet<T> {
 
     /// Inserts a new element at the given `index`.
     /// 
-    /// The remaining elements are **shifted** if needed.
+    /// Also shifts the elements after `index` if needed.
     /// 
-    /// Returns `Some(value)` if the element was already in the [`OrderedSet<T>`], returns `None` otherwise.
+    /// Returns `Some(value)` if the [`OrderedSet<T>`] already contains `value`, returns [`None`] otherwise.
     /// 
     /// # Time complexity
-    /// O(1)
+    /// Lineal, O(n).
     pub fn insert(&mut self, index: usize, value: T) -> Option<T> {
         if index > self.vec.len() || self.contains(&value) { return Some(value) }
 
@@ -114,10 +113,10 @@ impl<T: Eq + Hash> OrderedSet<T> {
         None
     }
 
-    /// Returns the last element of the [`OrderedSet`], returns `None` if the [`OrderedSet`] is empty.
+    /// Returns the last element of the [`OrderedSet`], for an empty [`OrderedSet`] returns [`None`].
     /// 
     /// # Time complexity
-    /// O(1)
+    /// Constant, O(1).
     pub fn pop(&mut self) -> Option<T> {
         if self.vec.is_empty() { return None }
         let idx = self.vec.len() - 1;
@@ -142,10 +141,10 @@ impl<T: Eq + Hash> OrderedSet<T> {
 
     /// Removes and returns the element with the given `index`.
     /// 
-    /// If the `index` is out of bounds `None` is returned.
+    /// For an out-of-bounds index, returns [`None`].
     /// 
     /// # Time complexity
-    /// O(1)
+    /// Constant, O(1).
     pub fn remove_index(&mut self, index: usize) -> Option<T> {
         if index >= self.len() { return None }
 
@@ -165,12 +164,14 @@ impl<T: Eq + Hash> OrderedSet<T> {
         Some(self.vec.remove(index))
     }
 
-    /// Removes and returns the element that fulfills ```element == *value```
+    /// Removes and returns the element that fulfills ```element == *value```.
     /// 
-    /// If the [`OrderedSet`] doesn't contain such element, `None` is returned.
+    /// If no such element exists, returns [`None`].
+    /// 
+    /// Also shifts the following elements if needed.
     /// 
     /// # Time complexity
-    /// O(1)
+    /// Lineal, O(n).
     pub fn remove_value(&mut self, value: &T) -> Option<T> {
         let Ok(occ) = self.table.find_entry(Self::hash(value), |x| self.vec[*x] == *value) else {
             return None;
@@ -193,13 +194,13 @@ impl<T: Eq + Hash> OrderedSet<T> {
 
     /// Replaces the element in the given `index` by the given `replacement`.
     /// 
-    /// Returns `Ok(replaced_element)` if the replacement is successful,
-    /// Returns `Err(replacement)` otherwise.
+    /// Returns `Ok(replaced_element)` for a successful *replacement*,
+    /// returns `Err(replacement)` otherwise.
     /// 
-    /// The replacement will fail if the index is **out of bounds** or if the replacement is already in the [`OrderedSet`].
+    /// The replacement will fail for an **out-of-bounds** index or for an **already present** replacement.
     /// 
     /// # Time complexity
-    /// O(1)
+    /// Constant, O(1).
     pub fn replace_index(&mut self, index: usize, replacement: T) -> Result<T, T> {
         if index >= self.len() || self.contains(&replacement) { return Err(replacement) }
 
@@ -214,15 +215,15 @@ impl<T: Eq + Hash> OrderedSet<T> {
         Ok(std::mem::replace(&mut self.vec[index], replacement))
     }
 
-    /// Replaces the element in the given `index` by `replacement`.
+    /// Replaces the element that equals the given `value` by `replacement`.
     /// 
-    /// Returns `Ok(replaced_element)` if the replacement is successful,
-    /// Returns `Err(replacement)` otherwise.
+    /// Returns `Ok(replaced_element)` for a successful *replacement*,
+    /// returns `Err(replacement)` otherwise.
     /// 
-    /// The replacement will fail if the value is **not present** in the [`OrderedSet`] or if the replacement is already in the [`OrderedSet`].
+    /// The replacement will fail for missing `value` or for an **already present** `replacement`.
     /// 
     /// # Time complexity
-    /// O(1)
+    /// Constant, O(1).
     pub fn replace_value(&mut self, value: &T, replacement: T) -> Result<T, T> {
         if !self.contains(value) || self.contains(&replacement) { return Err(replacement); }
 
@@ -236,12 +237,12 @@ impl<T: Eq + Hash> OrderedSet<T> {
         Ok(std::mem::replace(&mut self.vec[index], replacement))
     }
 
-    /// Returns a **reference** to the element with the given `index`, or `None` if the `index` is **out of bounds**.
+    /// Returns a **reference** to the element with the given `index`, returns [`None`] for an **out-of-bounds** `index`.
     /// 
     /// For the panicking version use [`std::ops::Index`].
     /// 
     /// # Time complexity
-    /// O(1)
+    /// Constant, O(1).
     pub fn get(&self, index: usize) -> Option<&T> {
         self.vec.get(index)
     }
@@ -249,7 +250,7 @@ impl<T: Eq + Hash> OrderedSet<T> {
     /// Returns the `index` of the element that matches the given `value`.
     /// 
     /// # Time complexity
-    /// O(1)
+    /// Constant, O(1).
     pub fn get_index(&self, value: &T) -> Option<usize> {
         self.table.find(Self::hash(value), |x| self.vec[*x] == *value).map(|x| *x)
     }
@@ -258,10 +259,13 @@ impl<T: Eq + Hash> OrderedSet<T> {
 impl<T: Eq + Clone + Hash> std::ops::Index<usize> for OrderedSet<T> {
     type Output = T;
 
-    /// Returns a **reference** to the element at `index` or panics if the `index` is **out of bounds**.
+    /// Returns a **reference** to the element at the given `index`.
+    /// 
+    /// # Panics
+    /// Panics for **an out-of-bounds** `index`.
     /// 
     /// # Time complexity
-    /// O(1)
+    /// Constant, O(1).
     fn index(&self, index: usize) -> &Self::Output {
         &self.vec[index]
     }
@@ -271,7 +275,7 @@ impl<T: Eq + Hash> IntoIterator for OrderedSet<T> {
     type Item = T;
     type IntoIter = std::vec::IntoIter<T>;
 
-    /// Converts the [`OrderedSet<T>`] into an iterator over T.
+    /// Converts the [`OrderedSet<T>`] into an iterator over `T`.
     fn into_iter(self) -> Self::IntoIter {
         self.vec.into_iter()
     }
@@ -283,14 +287,17 @@ impl<'a, T: Eq + Hash> IntoIterator for &'a OrderedSet<T> {
 
     /// Returns an iterator over references of the elements in the [`OrderedSet`].
     /// 
-    /// Equivalent of [`OrderedSet::iter()`].
+    /// Same as [`OrderedSet::iter()`].
     fn into_iter(self) -> Self::IntoIter {
         self.vec.iter()
     }
 }
 
 impl<T: Display + Eq + Hash> Display for OrderedSet<T> {
-    /// Displays the [`OrderedSet`] in the form "\[e_0, e_1, e_2 ... e_n-1\]".
+    /// Displays the [`OrderedSet`] in the form "\[e_0, e_1, e_2 … e_n-1\]"
+    /// 
+    /// # Time complexity
+    /// Linear, O(n).
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{{")?;
         let mut idx = 0usize;
@@ -309,7 +316,7 @@ impl<T: Hash + Eq> Extend<T> for OrderedSet<T> {
     /// Appends the contents of the `iter` to the end of the [`OrderedSet`].
     /// 
     /// # Time complexity
-    /// O(n)
+    /// Linear, O(n).
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         for el in iter {
             self.push(el);
@@ -319,6 +326,9 @@ impl<T: Hash + Eq> Extend<T> for OrderedSet<T> {
 
 impl<T: Eq + Hash> PartialEq for OrderedSet<T> {
     /// Checks that both [`OrderedSets`](OrderedSet) contain the **same elements**, in the **same order**.
+    /// 
+    /// # Time complexity
+    /// Linear, O(n).
     fn eq(&self, other: &Self) -> bool {
         if self.len() != other.len() {
             return false

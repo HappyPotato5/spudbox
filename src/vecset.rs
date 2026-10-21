@@ -16,9 +16,9 @@ macro_rules! vecset {
 
 pub use crate::vecset;
 
-/// A simple Set, implemented with a [`Vec`].
+/// A simple Ordered Set, implemented with a [`Vec`].
 /// 
-/// You can use [`insert()`](Self::insert()), [`push()`](Self::push()), [`expand()`] to add new elements.
+/// You can use [`insert()`](Self::insert()), [`push()`](Self::push()), [`extend()`](Extend) to add new elements.
 /// 
 /// And [`pop()`](Self::pop()), [`remove_index()`](Self::remove_index()), [`remove_value()`](Self::remove_value()) to remove elements.
 ///
@@ -27,7 +27,6 @@ pub use crate::vecset;
 #[doc = include_str!("../examples/dedup2.rs")]
 /// ```
 #[derive(Default, Clone, Debug)]
-// TODO: make this support Eq and partialEq
 pub struct VecSet<T: Eq> {
     vec: Vec<T>
 }
@@ -51,6 +50,9 @@ impl<T: Eq> VecSet<T> {
     }
 
     /// Returns whether the [`VecSet<T>`] contains an `element` or not.
+    /// 
+    /// # Time complexity
+    /// Linear, O(n).
     pub fn contains(&self, value: &T) -> bool {
         self.vec.iter().any(|x| *x == *value)
     }
@@ -62,7 +64,10 @@ impl<T: Eq> VecSet<T> {
 
     /// Pushes a new value to the end of a [`VecSet<T>`].
     /// 
-    /// Returns `Some(value)` if the element was already in the [`VecSet<T>`], returns `None` otherwise.
+    /// Returns `Some(value)` for an already present `value`, returns [`None`] otherwise.
+    /// 
+    /// # Time complexity
+    /// Linear, O(n).
     pub fn push(&mut self, value: T) -> Option<T> {
         if self.contains(&value) { return Some(value) }
         self.vec.push(value);
@@ -71,16 +76,22 @@ impl<T: Eq> VecSet<T> {
 
     /// Inserts a new element at the given `index`.
     /// 
-    /// The remaining elements are **shifted** if needed.
+    /// **Shifts** the remaining elements if needed.
     /// 
-    /// Returns `Some(value)` if the element was already in the [`VecSet<T>`], returns `None` otherwise.
+    /// Returns `Some(value)` for an already present `value`, returns [`None`] otherwise.
+    /// 
+    /// # Time complexity
+    /// Linear, O(n).
     pub fn insert(&mut self, index: usize, value: T) -> Option<T> {
         if self.contains(&value) { return Some(value) }
         self.vec.insert(index, value);
         None
     }
 
-    /// Returns the last element of the [`VecSet`], returns `None` if the [`VecSet`] is empty.
+    /// Returns the last element of the [`VecSet`], returns `None` for an empty [`VecSet`].
+    /// 
+    /// # Time complexity
+    /// Constant, O(1).
     pub fn pop(&mut self) -> Option<T> {
         self.vec.pop()
     }
@@ -92,15 +103,25 @@ impl<T: Eq> VecSet<T> {
 
     /// Removes and returns the element with the given `index`.
     /// 
-    /// If the `index` is out of bounds `None` is returned.
+    /// **Shifts** the remaining elements if needed.
+    /// 
+    /// Returns [`None`] or an **out-of-bounds** index.
+    /// 
+    /// # Time complexity
+    /// Linear, O(n).
     pub fn remove_index(&mut self, index: usize) -> Option<T> {
         if index >= self.len() { return None }
         Some(self.vec.remove(index))
     }
 
-    /// Removes and returns the element that fulfills ```element == *value```
+    /// Removes and returns the element that fulfills ```element == *value```.
     /// 
-    /// If the [`VecSet`] doesn't contain such element, `None` is returned.
+    /// **Shifts** the remaining elements if needed.
+    /// 
+    /// If the [`VecSet`] doesn't contain such element, returns [`None`].
+    /// 
+    /// # Time complexity
+    /// Linear, O(n).
     pub fn remove_value(&mut self, value: &T) -> Option<T> {
         let idx = self.iter().position(|x| *x == *value)?;
 
@@ -114,22 +135,28 @@ impl<T: Eq> VecSet<T> {
 
     /// Replaces the element in the given `index` by the given `replacement`.
     /// 
-    /// Returns `Ok(replaced_element)` if the replacement is successful,
-    /// Returns `Err(replacement)` otherwise.
+    /// Returns `Ok(replaced_element)` for a *successful* replacement,
+    /// returns `Err(replacement)` otherwise.
     /// 
-    /// The replacement will fail if the index is **out of bounds** or if the replacement is already in the [`VecSet`].
+    /// The replacement will fail for an **out-of-bounds** index or for an already present `replacement`.
+    /// 
+    /// # Time complexity
+    /// Linear, O(n).
     pub fn replace_index(&mut self, index: usize, replacement: T) -> Result<T, T> {
         if self.contains(&replacement) { return Err(replacement) }
 
         Ok(std::mem::replace(&mut self.vec[index], replacement))
     }
 
-    /// Replaces the element in the given `index` by `replacement`.
+    /// Replaces the element that equals the given `value` by `replacement`.
     /// 
-    /// Returns `Ok(replaced_element)` if the replacement is successful,
-    /// Returns `Err(replacement)` otherwise.
+    /// Returns `Ok(replaced_element)` for a successful replacement,
+    /// returns `Err(replacement)` otherwise.
     /// 
-    /// The replacement will fail if the value is **not present** in the [`VecSet`] or if the replacement is already in the [`VecSet`].
+    /// The replacement will fail for missing `element` in the [`VecSet`] or for an already present `element`.
+    /// 
+    /// # Time complexity
+    /// Linear, O(n).
     pub fn replace_value(&mut self, value: &T, replacement: T) -> Result<T, T> {
         if self.contains(&replacement) { return Err(replacement) }
 
@@ -140,14 +167,20 @@ impl<T: Eq> VecSet<T> {
         Ok(std::mem::replace(&mut self.vec[idx], replacement))
     }
 
-    /// Returns a **reference** to the element with the given `index`, or `None` if the `index` is **out of bounds**.
+    /// Returns a **reference** to the element with the given `index`, returns [`None`] for an **out-of-bounds** `index`.
     /// 
     /// For the panicking version use [`std::ops::Index`].
+    /// 
+    /// # Time complexity
+    /// Constant, O(n).
     pub fn get(&self, index: usize) -> Option<&T> {
         self.vec.get(index)
     }
 
     /// Returns the `index` of the element that matches the given `value`.
+    /// 
+    /// # Time complexity
+    /// Linear, O(n).
     pub fn get_index(&self, value: &T) -> Option<usize> {
         self.vec.iter().position(|x| *x == *value)
     }
@@ -156,10 +189,13 @@ impl<T: Eq> VecSet<T> {
 impl<T: Eq> std::ops::Index<usize> for VecSet<T> {
     type Output = T;
 
-    /// Returns a **reference** to the element at `index` or panics if the `index` is **out of bounds**.
+    /// Returns a **reference** to the element at `index`.
+    /// 
+    /// # Panics
+    /// For an **out-of-bounds** index.
     /// 
     /// # Time complexity
-    /// O(1)
+    /// Constant, O(1).
     fn index(&self, index: usize) -> &Self::Output {
         &self.vec[index]
     }
@@ -169,7 +205,7 @@ impl<T: Eq> IntoIterator for VecSet<T> {
     type Item = T;
     type IntoIter = std::vec::IntoIter<T>;
 
-    /// Converts the [`VecSet<T>`] into an iterator over T.
+    /// Converts the [`VecSet<T>`] into an iterator over `T`.
     fn into_iter(self) -> Self::IntoIter {
         self.vec.into_iter()
     }
@@ -181,14 +217,14 @@ impl<'a, T: Eq> IntoIterator for &'a VecSet<T> {
 
     /// Returns an iterator over references of the elements in the [`VecSet`].
     /// 
-    /// Equivalent of [`VecSet::iter()`].
+    /// Same as [`VecSet::iter()`].
     fn into_iter(self) -> Self::IntoIter {
         self.vec.iter()
     }
 }
 
 impl<T: Display + Eq> Display for VecSet<T> {
-    /// Displays the [`VecSet`] in the form "\[e_0, e_1, e_2 ... e_n-1\]".
+    /// Displays the [`VecSet`] in the form "\[e_0, e_1, e_2 … e_n-1\]"
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{{")?;
         let mut idx = 0usize;
