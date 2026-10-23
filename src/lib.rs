@@ -51,6 +51,9 @@ pub mod ordered_set;
 #[cfg(any(feature = "vecset", doc, debug_assertions))]
 pub mod vecset;
 
+#[cfg(any(feature = "parse", doc, debug_assertions))]
+pub mod parse;
+
 #[cfg(any(feature = "lexer", doc, debug_assertions))]
 pub mod lexer;
 
