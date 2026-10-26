@@ -44,6 +44,13 @@
 //! + [`recipe!`](recipe): A **macro** that constructs [`Recipes`](lexer::Recipe) in a simplified manner.
 //! + [`recipe_list!`](recipe_list): A **macro** that constructs [`Vec<Recipe>`](lexer::Recipe) in a simplified manner.
 //! 
+//! From **[`parse`](mod@parse)**:
+//! + [`ParserStream`](parse::ParserStream): A **stream** able to [parse](parse::Parse) items from *tokens*, in a *top-down manner*.
+//! + [`ParserBuffer`](parse::ParserBuffer): The buffer that [`ParserStream`](parse::ParserStream) uses.
+//! + [`Parse`](parse::Parse): A **trait** implemented by any type that a [`ParserStream`](parse::ParserStream) can construct from a *sequence of tokens*.
+//! + [`Kinded`](parse::Kinded): A **trait** implemented by a *token type*, providing a getter to its *kind*.
+//! + [`ParseError`](parse::ParseError): The *default* **error type** returned when the [`ParserStream`](parse::ParserStream) couldn't parse an *item*.
+//! 
 //! ## Features
 //! This crate uses **features**, so you only import the submodules that **you use**.
 //! 
@@ -54,6 +61,7 @@
 //! 
 //! ### Additionally:
 //! + **`lexer`**: Enables the [`lexer`](mod@lexer) submodule.
+//! + **`parse`**: Enables the [`parse`](mod@parse) submodule.
 //! 
 //! **Spudbox** crate automatically **re-exports** prelude contents, to avoid this you can use the **`no-prelude`** **feature**.
 //! 

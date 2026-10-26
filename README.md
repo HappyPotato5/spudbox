@@ -25,6 +25,13 @@ From **[`lexer`](https://docs.rs/spudbox/latest/spudbox/lexer/)**:
 + [`recipe!`](https://docs.rs/spudbox/latest/spudbox/macro.recipe.html): A **macro** that constructs [`Recipes`](https://docs.rs/spudbox/latest/spudbox/lexer/recipe/struct.Recipe.html) in a simplified manner.
 + [`recipe_list!`](https://docs.rs/spudbox/latest/spudbox/macro.recipe_list.html): A **macro** that constructs [`Vec<Recipe>`](https://docs.rs/spudbox/latest/spudbox/lexer/recipe/struct.Recipe.html) in a simplified manner.
 
+From **[`parse`](https://docs.rs/spudbox/latest/spudbox/parse/)**:
++ [`ParserStream`](https://docs.rs/spudbox/latest/spudbox/parse/type.ParserStream.html): A **stream** able to [parse](https://docs.rs/spudbox/latest/spudbox/parse/trait.Parse.html) items from *tokens*, in a *top-down manner*.
++ [`ParserBuffer`](https://docs.rs/spudbox/latest/spudbox/parse/struct.ParserBuffer.html): The buffer that [`ParserStream`](https://docs.rs/spudbox/latest/spudbox/parse/type.ParserStream.html) uses.
++ [`Parse`](https://docs.rs/spudbox/latest/spudbox/parse/trait.Parse.html): A **trait** implemented by any type that a [`ParserStream`](https://docs.rs/spudbox/latest/spudbox/parse/type.ParserStream.html) can construct from a *sequence of tokens*.
++ [`Kinded`](https://docs.rs/spudbox/latest/spudbox/parse/trait.Kinded.html): A **trait** implemented by a *token type*, providing a getter to its *kind*.
++ [`ParseError`](https://docs.rs/spudbox/latest/spudbox/parse/struct.ParseError.html): The *default* **error type** returned when the [`ParserStream`](https://docs.rs/spudbox/latest/spudbox/parse/type.ParserStream.html) couldn't parse an *item*.
+
 ## Features
 This crate uses **features**, so you only import the submodules that **you use**.
 
@@ -35,6 +42,7 @@ This crate uses **features**, so you only import the submodules that **you use**
 
 ### Additionally:
 + **`lexer`**: Enables the [`lexer`](https://docs.rs/spudbox/latest/spudbox/lexer/) submodule.
++ **`parse`**: Enables the [`parse`](https://docs.rs/spudbox/latest/spudbox/parse/) submodule.
 
 **Spudbox** crate automatically **re-exports** prelude contents, to avoid this you can use the **`no-prelude`** **feature**.
 
