@@ -2,7 +2,7 @@
 name = "spudbox"
 version = "2.0.0"
 edition = "2024"
-description = "A library that implements some useful data structures."
+description = "A library that implements lots of useful data types."
 authors = ["HappyPotato5"]
 repository = "https://github.com/HappyPotato5/spudbox"
 license = "GPL-3.0-or-later"
