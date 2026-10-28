@@ -1,6 +1,6 @@
 [package]
 name = "spudbox"
-version = "3.0.0"
+version = "3.0.1"
 edition = "2024"
 description = "A library that implements lots of useful data types."
 authors = ["HappyPotato5"]
@@ -19,3 +19,6 @@ ordered-set = ["dep:hashbrown"]
 vecset = []
 lexer = []
 parse = []
+
+[package.metadata.docs.rs]
+all-features = true
