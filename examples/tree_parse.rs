@@ -38,18 +38,20 @@ impl Kinded for Token {
 }
 
 impl Parse<Token> for BinaryTree {
+    type Err = ParseError;
+
     fn parse(stream: ParserStream<Token>) -> Result<Self, ParseError> {
         let lit = stream.expect_token_kind(&TokenType::Lit);
         Ok(if let Ok(Token::Lit(lit)) = lit {
             BinaryTree::Leaf(*lit)
         } else {
-            stream.expect_token(&Token::LeftParen)?;
+            stream.expect_token_def(&Token::LeftParen)?;
 
             let l = Box::new(stream.parse()?);
-            stream.expect_token(&Token::Comma)?;
+            stream.expect_token_def(&Token::Comma)?;
             let r = Box::new(stream.parse()?);
 
-            stream.expect_token(&Token::RightParen)?;
+            stream.expect_token_def(&Token::RightParen)?;
 
             BinaryTree::Branch { left: l, right: r }
         })

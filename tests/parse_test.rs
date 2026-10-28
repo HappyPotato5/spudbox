@@ -41,6 +41,8 @@ pub enum Num {
 }
 
 impl Parse<Token> for Add {
+    type Err = ParseError;
+
     fn parse(stream: ParserStream<Token>) -> Result<Self, ParseError> {
         let a = stream.parse()?;
 
@@ -54,6 +56,8 @@ impl Parse<Token> for Add {
 }
 
 impl Parse<Token> for Mul {
+    type Err = ParseError;
+
     fn parse(stream: ParserStream<Token>) -> Result<Self, ParseError> {
         let a = stream.parse()?;
 
@@ -67,16 +71,18 @@ impl Parse<Token> for Mul {
 }
 
 impl Parse<Token> for Num {
+    type Err = ParseError;
+
     fn parse(stream: ParserStream<Token>) -> Result<Self, ParseError> {
         if stream.expect_token(&Token::OpenParen).is_ok() {
             let add = stream.parse()?;
-            stream.expect_token(&Token::CloseParen)?;
+            stream.expect_token_def(&Token::CloseParen)?;
 
             return Ok(Num::Group(Box::new(add)))
         }
 
         let mut num = 0;
-        stream.expect(|x| match x { Token::Int(i) => {num = *i; true}, _ => false })?;
+        stream.expect_def(|x| match x { Token::Int(i) => {num = *i; true}, _ => false })?;
 
         Ok(Num::Literal(num))
     }

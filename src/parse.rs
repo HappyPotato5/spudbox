@@ -19,18 +19,23 @@
 
 //! This submodule adds parsing utilities like the [`Parse`] and [`Kinded`] traits, and the types [`ParserStream`] and [`ParseError`].
 
-use std::marker::PhantomData;
+
 
 /// An error found during parsing.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct ParseError;
 
+
+
 /// A trait representing an object that a [`ParserStream`] can parse.
-pub trait Parse<Token, Err: Default = ParseError>
+/// 
+/// If parsing fails, returns [`Self::Err`].
+pub trait Parse<Token>
 where
     Self: Sized,
 {
-    fn parse(stream: ParserStream<Token, Err>) -> Result<Self, Err>;
+    type Err;
+    fn parse(stream: ParserStream<Token>) -> Result<Self, Self::Err>;
 }
 
 /// A trait implemented by `Token` types that have an associated **kind**.
@@ -43,33 +48,25 @@ pub trait Kinded {
 }
 
 
+
 /// A buffer used to parse *elements* from its *tokens*.
-/// 
-/// You can **choose** the type returned on **error** by setting the `Err` generic.
-/// 
-/// The returned `Err` in its [default](Default) form.
 #[derive(Clone)]
-pub struct ParserBuffer<'a, Token, Err: Default = ParseError> {
-    cell: std::cell::Cell<Cursor<'a, Token>>,
-    phantom: PhantomData<Err>
+pub struct ParserBuffer<'a, Token> {
+    cell: std::cell::Cell<Cursor<'a, Token>>
 }
 
 /// A stream used to *parse* elements from *tokens*.
-/// 
-/// You can **choose** the type returned on **error** by setting the `Err` generic.
-/// 
-/// The returned `Err` in its [default](Default) form.
-/// 
 /// # Examples
 /// You can find examples in this crate's [GitHub repository](https://github.com/HappyPotato5/spudbox), in the *examples folder*.
-pub type ParserStream<'a, Token, Err = ParseError> = &'a ParserBuffer<'a, Token, Err>;
+pub type ParserStream<'a, Token> = &'a ParserBuffer<'a, Token>;
 
-impl<'a, Token, Err: Default> ParserBuffer<'a, Token, Err> {
+
+
+impl<'a, Token> ParserBuffer<'a, Token> {
     /// Constructs a new [`ParserBuffer`] from a sequence of Tokens.
-    pub fn new(tokens: &'a [Token]) -> ParserBuffer<'a, Token, Err> {
+    pub fn new(tokens: &'a [Token]) -> ParserBuffer<'a, Token> {
         ParserBuffer {
-            cell: std::cell::Cell::new(Cursor::new(tokens)),
-            phantom: PhantomData
+            cell: std::cell::Cell::new(Cursor::new(tokens))
         }
     }
 
@@ -90,12 +87,12 @@ impl<'a, Token, Err: Default> ParserBuffer<'a, Token, Err> {
     }
 
     /// If the current token equals the supplied `tok`, then it consumes and returns it.
-    pub fn expect_token(&self, tok: &Token) -> Result<&'a Token, Err> 
+    pub fn expect_token(&self, tok: &Token) -> Result<&'a Token, ()> 
         where Token: PartialEq 
     {
-        let (res, next) = self.cell.get().step().ok_or(Err::default())?;
+        let (res, next) = self.cell.get().step().ok_or(())?;
         if *res != *tok {
-            return Err(Err::default());
+            return Err(());
         }
         self.cell.set(next);
 
@@ -103,12 +100,12 @@ impl<'a, Token, Err: Default> ParserBuffer<'a, Token, Err> {
     }
 
     /// If the current token's *kind* equals the supplied `kind`, then it consumes and returns it.
-    pub fn expect_token_kind(&self, kind: &Token::Kind) -> Result<&'a Token, Err> 
+    pub fn expect_token_kind(&self, kind: &Token::Kind) -> Result<&'a Token, ()> 
         where Token: Kinded
     {
-        let (res, next) = self.cell.get().step().ok_or(Err::default())?;
+        let (res, next) = self.cell.get().step().ok_or(())?;
         if res.kind() != *kind {
-            return Err(Err::default());
+            return Err(());
         }
         self.cell.set(next);
 
@@ -116,12 +113,12 @@ impl<'a, Token, Err: Default> ParserBuffer<'a, Token, Err> {
     }
 
     /// If the current token matches the `predicate`, it consumes and returns it.
-    pub fn expect<P>(&self, predicate: P) -> Result<&'a Token, Err> 
+    pub fn expect<P>(&self, predicate: P) -> Result<&'a Token, ()> 
         where P: FnOnce(&Token) -> bool 
     {
-        let (res, next) = self.cell.get().step().ok_or(Err::default())?;
+        let (res, next) = self.cell.get().step().ok_or(())?;
         if !predicate(res) {
-            return Err(Err::default());
+            return Err(());
         }
         self.cell.set(next);
 
@@ -131,15 +128,52 @@ impl<'a, Token, Err: Default> ParserBuffer<'a, Token, Err> {
     /// If the current token matches the `predicate`, returns the predicate's result, and consumes the token.
     /// 
     /// The predicate returns an [`Option`], [`Some(value)`](Some) => true. [`None`] => false.
-    pub fn expect_and_map<F, R>(&self, predicate: F) -> Result<R, Err> 
+    pub fn expect_and_map<F, R>(&self, predicate: F) -> Result<R, ()> 
         where F: FnOnce(&Token) -> Option<R> {
-        let (res, next) = self.cell.get().step().ok_or(Err::default())?;
+        let (res, next) = self.cell.get().step().ok_or(())?;
         if let Some(v) = predicate(res) {
             self.cell.set(next);
             Ok(v)
         } else {
-            Err(Err::default())
+            Err(())
         } 
+    }
+
+    /// If the current token equals the supplied `tok`, then it consumes and returns it.
+    /// 
+    /// Otherwise, returns the default value of the `Err` type.
+    pub fn expect_token_def<Err>(&self, tok: &Token) -> Result<&'a Token, Err> 
+        where Token: PartialEq, Err: Default
+    {
+        self.expect_token(tok).map_err(|_| Err::default())
+    }
+
+    /// If the current token's *kind* equals the supplied `kind`, then it consumes and returns it.
+    /// 
+    /// Otherwise, returns the default value of the `Err` type.
+    pub fn expect_token_kind_def<Err>(&self, kind: &Token::Kind) -> Result<&'a Token, Err> 
+        where Token: Kinded, Err: Default
+    {
+        self.expect_token_kind(kind).map_err(|_| Err::default())
+    }
+
+    /// If the current token matches the `predicate`, it consumes and returns it.
+    /// 
+    /// Otherwise, returns the default value of the `Err` type.
+    pub fn expect_def<P, Err>(&self, predicate: P) -> Result<&'a Token, Err> 
+        where P: FnOnce(&Token) -> bool, Err: Default
+    {
+        self.expect(predicate).map_err(|_| Err::default())
+    }
+
+    /// If the current token matches the `predicate`, returns the predicate's result, and consumes the token.
+    /// 
+    /// Otherwise, returns the default value of the `Err` type.
+    /// 
+    /// The predicate returns an [`Option`], [`Some(value)`](Some) => true. [`None`] => false.
+    pub fn expect_and_map_def<F, R, Err>(&self, predicate: F) -> Result<R, Err> 
+        where F: FnOnce(&Token) -> Option<R>, Err: Default {
+        self.expect_and_map(predicate).map_err(|_| Err::default())
     }
 
     /// Consumes **as many as possible** matching tokens, until it finds a *non-matching* token or *runs out of tokens*.
@@ -204,7 +238,7 @@ impl<'a, Token, Err: Default> ParserBuffer<'a, Token, Err> {
     }
 
     /// Tries to parse a `T` object with the remaining tokens.
-    pub fn parse<T: Parse<Token, Err>>(&'a self) -> Result<T, Err> {
+    pub fn parse<T: Parse<Token>>(&'a self) -> Result<T, T::Err> {
         let checkpoint = self.cell.get();
         match T::parse(self) {
             Ok(v) => Ok(v),
@@ -218,7 +252,7 @@ impl<'a, Token, Err: Default> ParserBuffer<'a, Token, Err> {
     /// Parses as many `Ts` as possible, until failure, or until it runs out of tokens.
     /// 
     /// Returns an *empty* [`Vec`] if it didn't find any *matching* tokens.
-    pub fn parse_many<T: Parse<Token, Err>>(&'a self) -> Vec<T> {
+    pub fn parse_many<T: Parse<Token>>(&'a self) -> Vec<T> {
         let mut result = Vec::new();
 
         while let Ok(t) = self.parse::<T>() {
@@ -238,6 +272,8 @@ impl<'a, Token, Err: Default> ParserBuffer<'a, Token, Err> {
     }
 
     /// Consumes the next token, if any, and returns it. 
+    /// 
+    /// Useful to get a token for error-printing purposes.
     pub fn next(&self) -> Option<&'a Token> {
         let (tok, next) = self.cell.get().step()?;
         self.cell.set(next);
