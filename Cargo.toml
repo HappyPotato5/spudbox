@@ -19,3 +19,6 @@ ordered-set = ["dep:hashbrown"]
 vecset = []
 lexer = []
 parse = []
+
+[package.metadata.docs.rs]
+all-features = true

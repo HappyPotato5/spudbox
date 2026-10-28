@@ -69,19 +69,19 @@
 //! You can find examples in the [GitHub repository](https://github.com/HappyPotato5/spudbox).
 //! 
 
-#[cfg(any(feature = "arena", doc, debug_assertions))]
+#[cfg(feature = "arena")]
 pub mod arena;
 
-#[cfg(any(feature = "ordered-set", doc, debug_assertions))]
+#[cfg(feature = "ordered-set")]
 pub mod ordered_set;
 
-#[cfg(any(feature = "vecset", doc, debug_assertions))]
+#[cfg(feature = "vecset")]
 pub mod vecset;
 
-#[cfg(any(feature = "parse", doc, debug_assertions))]
+#[cfg(feature = "parse")]
 pub mod parse;
 
-#[cfg(any(feature = "lexer", doc, debug_assertions))]
+#[cfg(feature = "lexer")]
 pub mod lexer;
 
 /// The submodule that contains the most used types.
@@ -91,17 +91,19 @@ pub mod lexer;
 /// + [`ordered_set::*`](mod@ordered_set)
 /// + [`vecset::*`](mod@vecset)`
 pub mod prelude {
+    #![allow(unused)]
     use super::*;
 
-    #[cfg(any(feature = "arena", doc, debug_assertions))]
+    #[cfg(any(feature = "arena"))]
     pub use arena::*;
 
-    #[cfg(any(feature = "ordered-set", doc, debug_assertions))]
+    #[cfg(any(feature = "ordered-set"))]
     pub use ordered_set::*;
 
-    #[cfg(any(feature = "vecset", doc, debug_assertions))]
+    #[cfg(any(feature = "vecset"))]
     pub use vecset::*;
 }
 
+#[allow(unused)]
 #[cfg(not(feature = "no-prelude"))]
 pub use prelude::*;
